@@ -3,13 +3,13 @@
 Introduction to system-level programming with fundamental OS concepts, procedures, primitive data types,user-defined types. Topics may include process management, memory management, process coordinationand synchronization, inter-process communication, file systems, networking, pointers, heap and stack mem-ory management, and system/library calls.
 ### Topics Covered
 The course will cover the following topics, although some material may be omitted due to time constraints:
-•Introduction to computer systems•Data representation: primitive data types, compound data types, pointers
-•Memory management: stack and heap, dynamic memory allocation, linked lists
-•Program building
-•Concurrent computing: concurrent systems, process management, IPC, threads
-•Input/Output
-•Program organization
-•Graphics libraries and shell scripts
+-Introduction to computer systems•Data representation: primitive data types, compound data types, pointers
+-Memory management: stack and heap, dynamic memory allocation, linked lists
+-Program building
+-Concurrent computing: concurrent systems, process management, IPC, threads
+-Input/Output
+-Program organization
+-Graphics libraries and shell scripts
 ## Assignments
 I use "Assembly Coding Style" for commenting the code. Although it can make the lines longer than standard (125), it makes it easier for the TAs to visualise what the intentions of the given code sections are.
 ### Assignment #1
