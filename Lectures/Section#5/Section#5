@@ -1,0 +1,356 @@
+# Section 5
+Concurrent Computing
+1. Concurrent systems
+2. Process management
+3. Inter-process communication
+4. Threads
+
+## Section 5.1
+Concurrent Systems
+1. Overview 
+2. Types of concurrent systems
+3. Issues in concurrency
+
+### 5.1.1  Overview
+What is concurrency?
+    it’s doing more than one thing at a time
+What is concurrent computing?
+- it’s when a program has more than one control flow
+- in software engineering, a system is a large program or application
+- a system can be:
+    - distributed
+    - multi-process
+    - multi-threaded
+
+### 5.1.2  Types of Concurrent Systems
+- Distributed systems
+- Multi-process systems
+- Multi-threaded systems
+
+#### Distributed Systems
+What is a distributed system?
+    it’s a system that executes over multiple physical hosts
+    - typically in different locations, cities, or countries
+    each host has different resources
+    - different file systems
+    - different CPUs, processing capabilities
+    - ... everything ...
+    hosts must be networked together in order to communicate
+    - intranet: network internal to an organization
+    - internet: network external to all organizations (public network)
+
+Why a distributed system?
+    users can be in different physical locations
+    server hosts can be in different physical locations
+    a single host may have insufficient processing power\
+    example:
+        - server computers store the data
+        - client computers access the centralized data
+
+#### Multi-Process Systems
+What is a multi-process system?
+    it’s a system made up of multiple processes (running executables)
+    these multiple processes can be:
+        - different executables
+        - multiple copies of the same executable
+    each process has independent control flow(s) and virtual memory
+    processes typically need to communicate with each other
+        - they must use inter-process communication (IPC) techniques
+
+Why a multi-process system?
+    the system may have very different tasks to perform
+    the tasks may be completely independent from each other
+    the tasks may use different resources than each other
+    example:
+        - one client process may communicate with the user
+        - one server process may handle user requests
+        - one process may regulate access to the database
+#### Multi-Threaded Systems
+What is a multi-threaded system?
+    it’s where a process has multiple control flows, called threads
+    all the threads in one process share the same:
+        - virtual memory
+        - address space
+        - resources
+    different threads may need to synchronize with each other
+    to communicate or exchange information
+    this creates possible issues with:
+        - race conditions
+        - deadlocks
+
+Why a multi-threaded system?
+    a process may have different tasks to perform
+    the tasks may be somewhat dependent on each other
+    example:
+        - one thread blocks, waits for user input, dispatches user requests
+        - other threads deal with the user requests
+
+### 5.1.3  Issues in Concurrency
+#### Shared resources
+    multiple processes or threads may need the same resource
+        example:  data in a variable or in a file
+    operations that make changes to resources must be atomic
+        atomic operations cannot be preempted (interrupted) by the CPU
+    examples of shared resources
+        - processes accessing the same file
+            - file should be locked
+        - threads accessing a shared variable
+            - variable should be locked using a semaphore or mutex
+
+#### Deadlock
+    this happens when multiple threads are blocked, all waiting for a condition that will never occur
+    deadlocks are usually due to:
+        - programming error(s)
+        - the improper handling of semaphores or mutexes
+
+#### Race condition
+    this happens when the correctness of a program depends on one thread reaching a point in the control flow before another thread
+        - this order cannot be guaranteed
+
+
+## Section 5.2
+Process Management
+1. Overview
+2. Managing processes
+3. System calls
+
+### 5.2.1  Overview
+What is a process?
+    it’s a running executable
+
+What is process management?
+    - it’s controlling the execution of a process
+    - examples:
+        - starting (spawning) a new process
+        - stopping a processpausing a process
+        - modifying the behaviour of a process using signals
+
+Processes can be managed: 
+- by a user
+    - using shell commands
+- by other programs or processes
+    - using system calls
+
+Each process has:
+    a unique process identifier (PID)
+    a parent process
+        - this is the process that spawned it
+        - the parent process id is PPID
+    its own address space and virtual memory
+        - it has its own code segment, data segment, function call stack, heap
+    its own control flow(s)
+        - it may be multi-threaded
+
+### 5.2.2  Managing Processes
+From a shell, a user can:
+    start a process
+        - in the foreground
+        - in the background
+    send a signal to a process
+        - to suspend the process
+        - to stop the process
+        - ... and other stuff, more on this later ..
+
+A process can start a new process:
+    by cloning itself
+        - using the fork() system call
+    by morphing itself
+        - using the exec() family of system calls
+
+### 5.2.3  System Calls
+Some system calls related to process management
+    - fork()
+    - exec()
+    - wait()
+    - system()
+#### Forking a Clone Process
+pid_t fork(void)
+    Description
+        this system call creates a clone of the current process
+            - the current process is the parent
+            - the new process is the child
+            - the child process gets a copy of the parent’s address space
+        the return value of the fork() system call
+        - in child process:
+            - zero
+        - in parent process:
+            - child process id, if successful
+            - -1 in case of error
+
+        - coding example <p2>
+````c
+#include <stdio.h>
+#include <unistd.h>
+
+int main()
+{
+  int rc; 
+  int i;
+
+  printf("Forking...\n");
+
+  rc = fork();
+
+  if (rc == 0) {
+    printf("fork returned %d, this is the child \n", rc);
+    for (i=1; i<=24; ++i) {
+      printf("The ants go marching *%2d* by *%2d*, hurrah, hurrah, \n", i, i);
+      usleep(500000);
+    }
+  }
+  else {
+    printf("fork returned %d, this is the parent \n", rc);
+    for (i=1; i<=24; ++i) {
+      printf("The ants go marching  %2d  by  %2d , hurrah, hurrah, \n", i, i);
+      usleep(1000000);
+    }
+  }
+}
+````
+
+Multiple child processes can be spawned
+    - each child process gets a copy of the parent’s code
+    - multiple forks in the parent mean multiple forks in the children
+
+Watch for fork bombs
+    - the OS keeps process table
+    - all tables have finite capacity
+    - coding example <p3>
+````c
+#include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
+
+int main(int argc, char *argv[])
+{
+  int pid, ppid, i, count;
+
+  if (argc < 2)
+    count = 1;
+  else
+    count = atoi(argv[1]);
+
+  pid = getpid();
+  printf("Parent:  %d\n", pid);
+
+  for (i=0; i<count; ++i) {
+    fork();
+    fork();
+  }
+  pid  = getpid();
+  ppid = getppid();
+  printf("Child %d with parent %d \n", pid, ppid);
+  sleep(1);
+}
+````
+
+#### Morphing Into Another Process
+Use the exec() family of system calls
+    This replaces the current process code with another program
+        - it has the same PID
+        - it has different instructions
+    examples:  execl(), execlp(), execle(), execv(), execvp()
+    differences are in the parameters and the environment variables
+    if exec() call fails, the original program continues
+    coding example <p4>
+````c
+#include <stdio.h>
+#include <unistd.h>
+#include <string.h>
+
+int main()
+{
+  char buffer[80]; 
+  char *args[3];
+  int rc;
+
+  strcpy(buffer, "p3");
+  args[0] = "p3";
+//  args[1] = "2";
+  args[1] = NULL;
+  args[2] = NULL;
+
+  printf("Morphing...\n");
+
+  rc = execvp(buffer, args);
+
+  printf("rc = %d \n", rc);
+
+}
+````
+
+#### Waiting for a Child Process
+pid_t wait(int *status)
+    Description
+        this pauses the execution of the parent until any child process terminates
+        return value:
+            - child PID, if successful
+            - -1 in case of error
+
+pid_t waitpid(pid_t pid, int *status, int options)
+    Description
+        pauses execution of parent until specified child process terminates
+        return value:
+            - child PID, if successful
+            - -1 in case of error
+    coding example <p5>
+````c
+#include <stdio.h>
+#include <unistd.h>
+#include <sys/wait.h>
+#include <sys/types.h>
+
+int main()
+{
+  int status;
+  int fave1, fave2;
+
+  printf("Parent:  %d\n", getpid());
+
+  fave1 = fork();
+
+  if (fave1 == 0) {
+    fave2 = fork();
+    if (fave2 == 0)
+      sleep(1);
+    else {
+      printf("%d spawned %d, waiting...\n", getpid(), fave2);
+      waitpid(fave2, &status, 0);
+    }
+  }
+  else {
+    printf("%d spawned %d, waiting...\n", getpid(), fave1);
+    wait(&status);
+  }
+
+  printf("%d terminating \n", getpid());
+
+  sleep(1);
+
+}
+````
+
+#### Invoking a Shell Command
+int system(const char *command)
+    Description
+        this spawns a child shell, and runs the specified command
+        the process blocks until the command execution has completed
+        return value:
+            - shell termination status, if successful
+            - -1 in case of error
+        coding example <p6>
+````c
+#include <stdio.h>
+#include <stdlib.h>
+
+int main()
+{
+  system("clear");
+  system("ls -l");
+  printf("\n");
+
+  system("who");
+
+}
+
+````
