@@ -354,3 +354,159 @@ int main()
 }
 
 ````
+
+## Section 5.3
+Inter-Process Communication
+1.Overview
+2.Signals
+3.Sockets
+
+### 5.3.1  Overview
+What is inter-process communication (IPC)?
+    it’s the sending and receiving of information between processes
+        - on the same physical host
+        - on separate physical hosts
+            - the hosts must be networked together
+    Main approaches to IPC
+        - signals
+        - sockets
+
+### 5.3.2  Signals
+What is a signal?
+    it’s an integer value sent from one process to another
+        - there is a fixed set of existing signal values
+            - /usr/include/.../bits/signum.h
+        - only two of these are user-defined
+        - signals can be sent from the shell too!
+    signals are typically used in error situations
+        - to tell a process to terminate
+    they are a very limited kind of IPC
+        - processes must be on the same host
+            we cannot send signals between two different hosts
+            only predefined signal values can be sent
+There are two steps in using signals:
+    install a signal handler function
+        - this tells the process which function to call when a signal is received
+    send a signal
+        - end a specific signal from one process to another
+    coding example <p1>
+
+Installing a Signal Handler
+What is a signal handler?
+    a function to be called when a specific signal is received
+Characteristics
+    - every signal has its own handler
+    - there is a default handler for every signal
+        - the default behaviour is usually to terminate the process
+    - the signal handler is installed using the signal() system call
+
+#### sighandler_t signal(int signum, sighandler_t action)
+Description
+    this system call installs the signal handler specified in action to handle signal signum
+    sighandler_t is a predefined data type
+        - it is used for a function that:
+            - takes one int as parameter
+            - returns void
+    it returns the signal handler previously associated with signum
+    signum must be one of the predefined signal values
+    action can have one of the following values:
+        - SIG_IGN
+            tells the process to ignore the signal and do nothing
+        - SIG_DFL
+            tells the process to call the default signal handler
+        - a signal handler function
+            tells the process to call the specified function
+    coding example <p2>
+### Sending a Signalint kill(pid_t pid, int signum)
+Description
+    this sends the signal signum to the process with identifier pid
+    signum must be one of the predefined signal values
+    return value:
+        - zero, if successful
+        - -1 in case of error
+    coding example <p3>
+
+### 5.3.3  Sockets
+What is a socket?
+    it’s an endpoint in inter-process communication (IPC)
+        - the processes can be on the same host, or on different hosts
+    a socket address is made up of:
+        - an Internet Protocol (IP) address
+            indicating a unique host on a network
+        - a port number
+            indicating a unique application running on that host
+    it is represented as an integer
+
+#### Socket Components
+    IP address
+        this uniquely identifies a computer at the network layer
+    Port number
+        this uniquely identifies an application at the transport layer
+            remote hosts don’t know an application’s PID
+        only specified range of values is unreserved and can be used
+
+#### Types of Sockets
+Stream sockets
+    These are connection-based sockets
+        - connection must be established between sender and receiver first
+        - after a connection is established, two-way communication is finised
+    they are used for:
+        - reliable packet delivery
+        - packet correctness
+        - reliable order of packets
+    they work with the TCP transport protocol
+
+Datagram sockets
+    these are connection-less sockets
+    they are used for:
+        faster packet delivery
+    thet work with the UDP transport protocol
+
+Raw sockets
+    these bypass transport layer entirely
+
+#### Socket Communications
+    Steps in socket communications
+        - each endpoint opens a socket
+        - for streams sockets, a connection is established
+        - packets are send and received
+        - each endpoint closes its socket
+
+#### Client-Server Model
+What is the client-server model?
+    Its a type of system architecture
+        its one approach for organizing code in large applications
+    its a type of IPC architecture
+Characteristics
+    One server process receives requests and performs work
+    One or more client processes send requests to server
+Steps in establishing connection-based communications
+    server:
+        - create a stream on which to receive connection requests
+        - bind the socket to server's IP address and port number
+        - listen on socket for incoming connection request from client
+        - accept a connection from client
+        - receive and send data
+        - close the socket
+    Client:
+        - create a stream socket to connect to the server
+        - connect to the server at its IP adress and port number
+        - send and receive data
+        - close the socket
+    coding example <p4>
+
+Steps in establishing connection-less communications
+    server:
+        - create a datagram socket on which to reveive messages
+        - bind the socket to server's IP address and port number
+        - select incoming message from client
+        - receive and send data
+        - close the socket
+    client:
+        - create a datagram socket to connect to the server
+        - connect to the server at its IP address and port number
+        - send and receive data
+        - close the socket
+    coding example <p5>
+
+    
